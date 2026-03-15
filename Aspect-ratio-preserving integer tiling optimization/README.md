@@ -3,7 +3,7 @@
 Parameters:
 - Painting -> The Garden of Earthlly Delights: 7793x4409px
 - Notebook -> 100H Squared Notebook Pagoda: 594x832px
-- $\rho^{*}$: painting's width/height ratio -> 1.768
+- $\rho^{star}$: painting's width/height ratio -> 1.768
 
 Variables:
 - $C \in N^{+}$: amount of books in columns
@@ -18,5 +18,5 @@ Equations:
 Objective:  minimize  $N = C * R$, being N the total amount of notebooks.
 
 Abiding to the following restrictions:
-- |$\rho - \rho^{*}| \leq \epsilon * \rho^{*}$: the absolute difference of the composed books' ratio and the painting's ratio is less than an admissible distance threshold.
+- $|\rho - \rho^{star}| \leq \epsilon * \rho^{star}$: the absolute difference of the composed books' ratio and the painting's ratio is less than an admissible distance threshold.
 - $\epsilon = 0.05$: the tolerance of the admissible threshold is 5%
