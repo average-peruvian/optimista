@@ -16,19 +16,19 @@ from scipy.optimize import differential_evolution
 
 CM_PER_INCH = 2.54
 
-def cm_a_px(w_cm, h_cm, dpi_x, dpi_y):
-    w_px = round(w_cm / CM_PER_INCH * dpi_x)
-    h_px = round(h_cm / CM_PER_INCH * dpi_y)
+def cm_a_px(w_cm, h_cm, dpi):
+    w_px = round((w_cm / CM_PER_INCH) * dpi)
+    h_px = round((h_cm / CM_PER_INCH) * dpi)
     return w_px, h_px
 
-def parse_dim(text,un,dpi_x,dpi_y):
+def parse_dim(text,un,dpi):
     parts = text.lower().replace(' ','').split('x')
     if len(parts) != 2:
         raise ValueError("Oe, no seas huevón p. \n'WxH'.")
 
     w, h = float(parts[0]), float(parts[1])
     if un == 'cm':
-        w, h = cm_a_px(w, h, dpi_x, dpi_y)
+        w, h = cm_a_px(w, h, dpi)
     else:
         w, h = int(round(w)), int(round(h))
     return w, h
@@ -100,7 +100,7 @@ def exportar(img_path, sol, salida_dir):
     os.makedirs(salida_dir, exist_ok=True)
 
     img = Image.open(img_path).convert('RGB')
-    img = img.resize((sol['grilla_w'], sol['grilla_h']), Image.LANCZOS)
+    img = img.resize((sol['grilla_w'], sol['grilla_h']), Image.Resampling.LANCZOS)
 
     tile_w, tile_h = sol['w'], sol['h']
 
@@ -124,14 +124,20 @@ def main():
     parser.add_argument('dimensiones', help='Dimensiones del cuaderno WxH, ej: 594x832')
     parser.add_argument('--unidad',  default='cm', choices=['px', 'cm'],
                         help='Unidad de las dimensiones (default: cm)')
+    parser.add_argument('--dpi', type=int, default=96,
+                        help='DPS de conversión (default: 96)')
     parser.add_argument('--epsilon', type=float, default=0.05,
                         help='Tolerancia de ratio admisible (default: 0.05)')
+    parser.add_argument('--exportar',  default='false', choices=['true','false'],
+                        help='Si debe exportar los recuerdos post-procesamiento (default: false)')
     parser.add_argument('--salida',  default='tiles',
                         help='Directorio de salida (default: ./tiles)')
     parser.add_argument('--verbose', default='true', choices=['true','false'],
                         help='Printear la información (default: true)')
+    
     args = parser.parse_args()
     verbose = True if args.verbose=='true' else False
+    export = True if args.exportar=='true' else False
 
     # Leer imagen
     img_path = args.imagen
@@ -139,12 +145,11 @@ def main():
  
     with Image.open(img_path) as img:
         pin_w, pin_h = img.size
-        dpi_x, dpi_y = img.info.get('dpi')
  
     rho_s = pin_w / pin_h
  
     # Parsear dimensiones
-    w_libro, h_libro = parse_dim(args.dimensiones, args.unidad, dpi_x,dpi_y)
+    w_libro, h_libro = parse_dim(args.dimensiones, args.unidad, args.dpi)
  
     if verbose:
         print()
@@ -153,7 +158,7 @@ def main():
         print(f"  ρ* objetivo: {rho_s:.6f}")
         print(f"  Tile:        ({w_libro} × {h_libro} px)", end='')
         if args.unidad == 'cm':
-            print(f"  (convertido desde {args.dimensiones} cm a {dpi_x}x{dpi_y} dpi)", end='')
+            print(f"  (convertido desde {args.dimensiones} cm a dpi)", end='')
         print()
         print(f"  Tolerance:   ε = {args.epsilon*100:.1f}%")
         print("────────────────────────────────────────────────────────────────")
@@ -182,11 +187,12 @@ def main():
         sys.exit(1)
  
     # Exportar
-    print("─── Exportando ─────────────────────────────────────────────────")
-    exportar(img_path, sol, args.salida)
-    print("────────────────────────────────────────────────────────────────")
-    print()
- 
+    if export:
+        print("─── Exportando ─────────────────────────────────────────────────")
+        exportar(img_path, sol, args.salida)
+        print("────────────────────────────────────────────────────────────────")
+        print()
+    
  
 if __name__ == '__main__':
     main()
